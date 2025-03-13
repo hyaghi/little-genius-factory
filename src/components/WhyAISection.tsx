@@ -6,7 +6,7 @@ import { CheckCircle, ChevronsUp, Cpu, Globe, GraduationCap, Users } from 'lucid
 const benefits = [
   {
     title: 'Future-Ready Skills',
-    description: 'AI will shape nearly every industry. We prepare kids with the skills they'll need for tomorrow's world.',
+    description: "AI will shape nearly every industry. We prepare kids with the skills they'll need for tomorrow's world.",
     icon: <ChevronsUp className="h-6 w-6 text-ai-blue" />,
     delay: 100,
   },
@@ -76,7 +76,7 @@ const WhyAISection = () => {
             </p>
             
             <div className="space-y-5 mb-8">
-              {['Develop technical literacy from an early age', 'Build confidence with cutting-edge technology', 'Foster creativity alongside technical skills', 'Prepare for careers that don't even exist yet'].map((item, index) => (
+              {["Develop technical literacy from an early age", "Build confidence with cutting-edge technology", "Foster creativity alongside technical skills", "Prepare for careers that don't even exist yet"].map((item, index) => (
                 <div 
                   key={index} 
                   className={`flex items-start transition-all duration-500 ${
