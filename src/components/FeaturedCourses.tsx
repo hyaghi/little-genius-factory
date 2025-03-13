@@ -3,7 +3,7 @@ import { useRef, useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { 
   Clock, Code, BarChart3, Users, Star, ChevronRight, ChevronLeft, 
-  Cpu, Robot, Brain, ArrowRight, Lightbulb 
+  Cpu, Bot, Brain, ArrowRight, Lightbulb 
 } from 'lucide-react';
 
 const courses = [
@@ -40,7 +40,7 @@ const courses = [
     students: 1435,
     rating: 4.7,
     image: 'https://images.unsplash.com/photo-1531746790731-6c087fecd65a?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=60',
-    icon: <Robot className="h-6 w-6" />,
+    icon: <Bot className="h-6 w-6" />,
     color: 'from-ai-orange to-ai-yellow',
   },
   {

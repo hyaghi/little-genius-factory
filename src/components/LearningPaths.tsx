@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { ChevronRight, Code, Database, Puzzle, Robot, Sparkles } from 'lucide-react';
+import { ChevronRight, Code, Database, Puzzle, Bot, Sparkles } from 'lucide-react';
 
 const paths = [
   {
@@ -25,7 +25,7 @@ const paths = [
     id: 'path-3',
     title: 'Robotics & AI',
     description: 'Discover how AI powers robots and automation, with hands-on projects to build your own smart robots.',
-    icon: <Robot className="h-8 w-8 text-ai-pink" />,
+    icon: <Bot className="h-8 w-8 text-ai-pink" />,
     color: 'pink',
     delay: 300,
   },
