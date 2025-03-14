@@ -8,11 +8,22 @@ import Newsletter from '@/components/Newsletter';
 import Footer from '@/components/Footer';
 import { useEffect } from 'react';
 // Import Firebase to ensure it's initialized
-import '@/lib/firebase';
+import { initializeAnalytics } from '@/lib/firebase';
 
 const Index = () => {
   useEffect(() => {
     console.log('Firebase initialized on app startup');
+    // Initialize analytics
+    const setupAnalytics = async () => {
+      const analytics = await initializeAnalytics();
+      if (analytics) {
+        console.log('Firebase Analytics initialized');
+      } else {
+        console.log('Firebase Analytics not supported in this environment');
+      }
+    };
+    
+    setupAnalytics();
   }, []);
 
   return (
