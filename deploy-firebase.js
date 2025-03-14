@@ -101,13 +101,20 @@ const initializeFirebaseApp = async (projectId) => {
       
       const appName = await askQuestion('Enter a name for your web app (default: Web App): ') || 'Web App';
       
+      // Escape special characters in the app name to avoid command line issues
+      const escapedAppName = appName.replace(/'/g, "\\'").replace(/"/g, '\\"');
+      
       try {
-        execSync(`npx firebase-tools apps:create web "${appName}" --project=${projectId}`, { stdio: 'inherit' });
+        execSync(`npx firebase-tools apps:create web "${escapedAppName}" --project=${projectId}`, { stdio: 'inherit' });
         console.log('✅ Firebase web app created successfully!');
         return true;
       } catch (error) {
         console.error('❌ Failed to create Firebase web app:', error);
-        return false;
+        console.log('\n⚠️ Alternative method: Try creating the web app manually in the Firebase console:');
+        console.log(`https://console.firebase.google.com/project/${projectId}/overview`);
+        
+        const skipAppCreation = await askQuestion('Skip web app creation and continue with deployment? (y/n): ');
+        return skipAppCreation.toLowerCase() === 'y';
       }
     } else {
       console.log('✅ Firebase web app already exists.');
@@ -119,17 +126,25 @@ const initializeFirebaseApp = async (projectId) => {
     console.log('Attempting to create a new Firebase web app...');
     const appName = await askQuestion('Enter a name for your web app (default: Web App): ') || 'Web App';
     
+    // Escape special characters in the app name
+    const escapedAppName = appName.replace(/'/g, "\\'").replace(/"/g, '\\"');
+    
     try {
-      execSync(`npx firebase-tools apps:create web "${appName}" --project=${projectId}`, { stdio: 'inherit' });
+      execSync(`npx firebase-tools apps:create web "${escapedAppName}" --project=${projectId}`, { stdio: 'inherit' });
       console.log('✅ Firebase web app created successfully!');
       return true;
     } catch (createError) {
       console.error('❌ Failed to create Firebase web app:', createError);
-      return false;
+      console.log('\n⚠️ Alternative method: Try creating the web app manually in the Firebase console:');
+      console.log(`https://console.firebase.google.com/project/${projectId}/overview`);
+      
+      const skipAppCreation = await askQuestion('Skip web app creation and continue with deployment? (y/n): ');
+      return skipAppCreation.toLowerCase() === 'y';
     }
   }
 };
 
+// Create firebase.json if it doesn't exist
 if (!fs.existsSync('firebase.json')) {
   console.log('Creating firebase.json configuration file...');
   const firebaseConfig = {
