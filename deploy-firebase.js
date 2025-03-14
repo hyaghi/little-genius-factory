@@ -1,3 +1,4 @@
+
 #!/usr/bin/env node
 
 import { execSync } from 'child_process';
@@ -15,6 +16,9 @@ const askQuestion = (query) => new Promise((resolve) => rl.question(query, resol
 console.log('\n===== Firebase Deployment Script =====\n');
 console.log('Starting Firebase deployment process...');
 
+// Set the correct project ID here - this is the important part
+const DEFAULT_PROJECT_ID = 'yaghi-ai-academy';
+
 const getCurrentProjectId = () => {
   try {
     if (fs.existsSync('.firebaserc')) {
@@ -24,19 +28,17 @@ const getCurrentProjectId = () => {
   } catch (error) {
     console.error('Error reading .firebaserc:', error);
   }
-  return '';
+  return DEFAULT_PROJECT_ID; // Return the default project ID if .firebaserc doesn't exist
 };
 
 const promptForProjectId = async () => {
   const currentId = getCurrentProjectId();
   
   console.log('\n⚠️ Choose a Firebase project ID to continue.');
-  if (currentId) {
-    console.log(`Current project ID is: ${currentId}`);
-    const useExisting = await askQuestion('Do you want to use this project ID? (y/n): ');
-    if (useExisting.toLowerCase() === 'y') {
-      return currentId.trim();
-    }
+  console.log(`Current project ID is: ${currentId}`);
+  const useExisting = await askQuestion('Do you want to use this project ID? (y/n): ');
+  if (useExisting.toLowerCase() === 'y') {
+    return currentId.trim();
   }
   
   console.log('To create a new Firebase project, visit: https://console.firebase.google.com/');
@@ -44,8 +46,8 @@ const promptForProjectId = async () => {
   const projectId = await askQuestion('Please enter your Firebase project ID: ');
   
   if (!projectId || projectId.trim() === '') {
-    console.log('❌ Project ID cannot be empty. Please try again.');
-    return promptForProjectId();
+    console.log('❌ Project ID cannot be empty. Using default project ID:', DEFAULT_PROJECT_ID);
+    return DEFAULT_PROJECT_ID;
   }
   
   return projectId.trim();
@@ -146,6 +148,14 @@ const deploy = async () => {
     };
     fs.writeFileSync('.firebaserc', JSON.stringify(firebaserc, null, 2));
     console.log('✅ .firebaserc updated successfully with project ID:', projectId);
+
+    // Also update the Firebase config file if it exists
+    const firebaseConfigPath = 'src/lib/firebase.ts';
+    if (fs.existsSync(firebaseConfigPath)) {
+      console.log('Ensuring Firebase configuration file has the correct project ID...');
+      // We don't modify the file directly as it contains API keys and other config
+      console.log('✅ Please verify that the projectId in src/lib/firebase.ts matches:', projectId);
+    }
 
     const appInitialized = await initializeFirebaseApp(projectId);
     if (!appInitialized) {

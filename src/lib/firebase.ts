@@ -9,8 +9,8 @@ import { getAnalytics, isSupported } from "firebase/analytics";
 const firebaseConfig = {
   apiKey: "AIzaSyA7FjjQjuIu7a_PLli6YLO7rwjEVkXbWyg",
   authDomain: "yaghi-ai-academy.firebaseapp.com",
-  projectId: "yaghi-ai-academy",
-  storageBucket: "yaghi-ai-academy.firebasestorage.app",
+  projectId: "yaghi-ai-academy", // Make sure this matches your actual Firebase project ID
+  storageBucket: "yaghi-ai-academy.appspot.com", // Fix storage bucket domain
   messagingSenderId: "868430050989",
   appId: "1:868430050989:web:ccc491b90b7a90ce463824",
   measurementId: "G-D532D2090V"
