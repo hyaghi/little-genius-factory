@@ -53,19 +53,42 @@ const promptForProjectId = async () => {
   return projectId.trim();
 };
 
-const forceRelogin = async () => {
-  console.log('Logging out from Firebase to reset credentials...');
+// Force Firebase login to ensure proper authentication
+const ensureFirebaseLogin = async () => {
+  console.log('\n🔑 Checking Firebase login status...');
+  
   try {
-    execSync('npx firebase-tools logout', { stdio: 'inherit' });
-    console.log('✅ Successfully logged out from Firebase.');
+    // Try to get the current user to check login status
+    const loginCheckOutput = execSync('npx firebase-tools login:list', { encoding: 'utf8' });
     
-    console.log('Please log in with the Google account that has access to your project:');
-    execSync('npx firebase-tools login', { stdio: 'inherit' });
-    console.log('✅ Successfully logged in to Firebase.');
+    if (loginCheckOutput.includes('No authorized accounts')) {
+      console.log('You need to log in to Firebase. Starting login process...');
+      execSync('npx firebase-tools login', { stdio: 'inherit' });
+      console.log('✅ Successfully logged in to Firebase.');
+    } else {
+      console.log('✅ Already logged in to Firebase.');
+      
+      // Ask if the user wants to re-login
+      const relogin = await askQuestion('Do you want to log in with a different account? (y/n): ');
+      if (relogin.toLowerCase() === 'y') {
+        console.log('Logging out from Firebase to reset credentials...');
+        execSync('npx firebase-tools logout', { stdio: 'inherit' });
+        console.log('Now logging in with new account...');
+        execSync('npx firebase-tools login', { stdio: 'inherit' });
+        console.log('✅ Successfully logged in to Firebase with new account.');
+      }
+    }
     return true;
   } catch (error) {
-    console.error('❌ Error during Firebase re-login:', error);
-    return false;
+    console.log('⚠️ Error checking login status. Attempting direct login...');
+    try {
+      execSync('npx firebase-tools login', { stdio: 'inherit' });
+      console.log('✅ Successfully logged in to Firebase.');
+      return true;
+    } catch (loginError) {
+      console.error('❌ Failed to log in to Firebase:', loginError);
+      return false;
+    }
   }
 };
 
@@ -133,9 +156,12 @@ if (!fs.existsSync('firebase.json')) {
 
 const deploy = async () => {
   try {
-    const reloginResult = await forceRelogin();
-    if (!reloginResult) {
-      console.log('⚠️ Continuing without re-login. If you encounter permission issues, run this script again.');
+    // Ensure user is logged in to Firebase
+    const loginSuccessful = await ensureFirebaseLogin();
+    if (!loginSuccessful) {
+      console.log('❌ Unable to log in to Firebase. Please try running:');
+      console.log('npx firebase-tools login');
+      process.exit(1);
     }
     
     const projectId = await promptForProjectId();
@@ -155,6 +181,17 @@ const deploy = async () => {
       console.log('Ensuring Firebase configuration file has the correct project ID...');
       // We don't modify the file directly as it contains API keys and other config
       console.log('✅ Please verify that the projectId in src/lib/firebase.ts matches:', projectId);
+    }
+
+    console.log('\n✅ Verifying project access...');
+    try {
+      execSync(`npx firebase-tools projects:list`, { stdio: 'inherit' });
+    } catch (error) {
+      console.error('❌ Error accessing Firebase projects. Please check your permissions and that you have access to this project.');
+      const continueAnyway = await askQuestion('Continue with deployment anyway? (y/n): ');
+      if (continueAnyway.toLowerCase() !== 'y') {
+        process.exit(1);
+      }
     }
 
     const appInitialized = await initializeFirebaseApp(projectId);
@@ -194,8 +231,14 @@ const deploy = async () => {
       console.log(`🌎 Your website is now live at: https://${projectId}.web.app`);
     } catch (error) {
       console.error('❌ Deployment failed:', error);
-      console.log('\nTry running the Firebase CLI directly:');
+      console.log('\nTry running the Firebase CLI directly with:');
       console.log(`npx firebase-tools deploy --project=${projectId}`);
+      
+      console.log('\nIf you get a permission error, make sure:');
+      console.log('1. You are logged in with the correct Google account that has access to this Firebase project');
+      console.log('2. You have the necessary permissions (Owner or Editor) on the Firebase project');
+      console.log('3. Your Firebase project ID is correct');
+      
       process.exit(1);
     }
   } finally {
