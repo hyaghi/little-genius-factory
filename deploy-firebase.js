@@ -34,8 +34,8 @@ if (!fs.existsSync('firebase.json')) {
   console.log('firebase.json created successfully.');
 }
 
-// Check if .firebaserc exists, if not create a template
-let projectId = 'your-firebase-project-id';
+// Check if .firebaserc exists, if not create it with the correct project ID
+let projectId = '1-998159886681';
 if (fs.existsSync('.firebaserc')) {
   try {
     const firebaserc = JSON.parse(fs.readFileSync('.firebaserc', 'utf8'));
@@ -44,10 +44,10 @@ if (fs.existsSync('.firebaserc')) {
     console.error('Error reading .firebaserc:', error);
   }
 } else {
-  console.log('Creating .firebaserc template file...');
+  console.log('Creating .firebaserc file...');
   const firebaserc = {
     "projects": {
-      "default": "your-firebase-project-id"
+      "default": "1-998159886681"
     }
   };
   fs.writeFileSync('.firebaserc', JSON.stringify(firebaserc, null, 2));
@@ -78,41 +78,15 @@ try {
   }
 }
 
-// Check if .firebaserc has a project ID that needs to be updated
-if (projectId === 'your-firebase-project-id') {
-  rl.question('Enter your Firebase project ID: ', (newProjectId) => {
-    console.log(`Setting project ID to: ${newProjectId}`);
-    const firebaserc = {
-      "projects": {
-        "default": newProjectId
-      }
-    };
-    fs.writeFileSync('.firebaserc', JSON.stringify(firebaserc, null, 2));
-    
-    // Deploy to Firebase
-    console.log('Deploying to Firebase...');
-    try {
-      execSync('npx firebase-tools deploy', { stdio: 'inherit' });
-      console.log('Deployment completed successfully!');
-      console.log('Your website is now live at https://' + newProjectId + '.web.app');
-    } catch (error) {
-      console.error('Deployment failed:', error);
-      process.exit(1);
-    }
-    
-    rl.close();
-  });
-} else {
-  // Deploy to Firebase
-  console.log('Deploying to Firebase...');
-  try {
-    execSync('npx firebase-tools deploy', { stdio: 'inherit' });
-    console.log('Deployment completed successfully!');
-    console.log('Your website is now live at https://' + projectId + '.web.app');
-  } catch (error) {
-    console.error('Deployment failed:', error);
-    process.exit(1);
-  }
-  
-  rl.close();
+// Deploy to Firebase
+console.log('Deploying to Firebase...');
+try {
+  execSync('npx firebase-tools deploy', { stdio: 'inherit' });
+  console.log('Deployment completed successfully!');
+  console.log('Your website is now live at https://' + projectId + '.web.app');
+} catch (error) {
+  console.error('Deployment failed:', error);
+  process.exit(1);
 }
+
+rl.close();
