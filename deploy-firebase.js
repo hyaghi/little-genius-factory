@@ -1,10 +1,8 @@
 
-#!/usr/bin/env node
-
-import { execSync } from 'child_process';
-import * as readline from 'readline';
-import * as fs from 'fs';
-import * as path from 'path';
+const { execSync } = require('child_process');
+const readline = require('readline');
+const fs = require('fs');
+const path = require('path');
 
 const rl = readline.createInterface({
   input: process.stdin,
