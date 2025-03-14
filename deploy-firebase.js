@@ -1,4 +1,3 @@
-
 #!/usr/bin/env node
 
 import { execSync } from 'child_process';
@@ -16,7 +15,6 @@ const askQuestion = (query) => new Promise((resolve) => rl.question(query, resol
 console.log('\n===== Firebase Deployment Script =====\n');
 console.log('Starting Firebase deployment process...');
 
-// Function to prompt for Firebase project ID
 const promptForProjectId = async () => {
   console.log('\n⚠️ No valid Firebase project ID found or access denied to current project ID.');
   console.log('You need to provide a valid Firebase project ID to continue.');
@@ -32,7 +30,6 @@ const promptForProjectId = async () => {
   return projectId.trim();
 };
 
-// Check if firebase.json exists, if not create it
 if (!fs.existsSync('firebase.json')) {
   console.log('Creating firebase.json configuration file...');
   const firebaseConfig = {
@@ -55,10 +52,8 @@ if (!fs.existsSync('firebase.json')) {
   console.log('✅ firebase.json created successfully.');
 }
 
-// Main deployment function
 const deploy = async () => {
   try {
-    // Get or prompt for project ID
     let projectId = '';
     
     if (fs.existsSync('.firebaserc')) {
@@ -71,7 +66,6 @@ const deploy = async () => {
       }
     }
     
-    // Test if the project ID is valid
     let isValidProject = false;
     
     if (projectId) {
@@ -85,11 +79,9 @@ const deploy = async () => {
       }
     }
     
-    // If project ID is invalid or not found, prompt for a new one
     if (!isValidProject) {
       projectId = await promptForProjectId();
       
-      // Update .firebaserc with the new project ID
       console.log('Updating .firebaserc file with new project ID...');
       const firebaserc = {
         "projects": {
@@ -100,7 +92,6 @@ const deploy = async () => {
       console.log('✅ .firebaserc updated successfully with project ID:', projectId);
     }
 
-    // Check if node_modules exists
     if (!fs.existsSync('node_modules')) {
       console.log('⚠️ node_modules not found. Installing dependencies...');
       try {
@@ -112,7 +103,6 @@ const deploy = async () => {
       }
     }
 
-    // Build the application
     console.log('\n🔧 Building the application...');
     try {
       execSync('npm run build', { stdio: 'inherit' });
@@ -122,7 +112,6 @@ const deploy = async () => {
       process.exit(1);
     }
 
-    // Check if user is logged in to Firebase
     console.log('\n🔑 Checking Firebase login status...');
     try {
       const loginOutput = execSync('npx firebase-tools login:list', { encoding: 'utf8' });
@@ -147,7 +136,6 @@ const deploy = async () => {
       }
     }
 
-    // Deploy to Firebase
     console.log('\n🚀 Deploying to Firebase...');
     try {
       execSync('npx firebase-tools deploy', { stdio: 'inherit' });
@@ -166,5 +154,4 @@ const deploy = async () => {
   }
 };
 
-// Start the deployment process
 deploy();
