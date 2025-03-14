@@ -12,7 +12,7 @@ const Footer = () => {
             <div className="flex items-center mb-4">
               <LightbulbIcon className="h-8 w-8 text-ai-blue mr-2" />
               <span className="font-bold text-xl bg-clip-text text-transparent bg-gradient-to-r from-ai-blue to-ai-purple">
-                AI Academy
+                Yaghi's Ai Academy for Kids
               </span>
             </div>
             <p className="text-gray-600 mb-4">
