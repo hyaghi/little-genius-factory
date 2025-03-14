@@ -1,4 +1,3 @@
-
 #!/usr/bin/env node
 
 import { execSync } from 'child_process';
@@ -51,6 +50,46 @@ const forceRelogin = async () => {
   } catch (error) {
     console.error('❌ Error during Firebase re-login:', error);
     return false;
+  }
+};
+
+const initializeFirebaseApp = async (projectId) => {
+  console.log('\n🔧 Checking if Firebase web app exists...');
+  
+  try {
+    const appsOutput = execSync(`npx firebase-tools apps:list --project=${projectId}`, { encoding: 'utf8' });
+    
+    if (appsOutput.includes('No apps found')) {
+      console.log('No web app found. Creating a new Firebase web app...');
+      
+      const appName = await askQuestion('Enter a name for your web app (default: Web App): ') || 'Web App';
+      
+      try {
+        execSync(`npx firebase-tools apps:create web "${appName}" --project=${projectId}`, { stdio: 'inherit' });
+        console.log('✅ Firebase web app created successfully!');
+        return true;
+      } catch (error) {
+        console.error('❌ Failed to create Firebase web app:', error);
+        return false;
+      }
+    } else {
+      console.log('✅ Firebase web app already exists.');
+      return true;
+    }
+  } catch (error) {
+    console.error('⚠️ Could not check for existing apps:', error);
+    
+    console.log('Attempting to create a new Firebase web app...');
+    const appName = await askQuestion('Enter a name for your web app (default: Web App): ') || 'Web App';
+    
+    try {
+      execSync(`npx firebase-tools apps:create web "${appName}" --project=${projectId}`, { stdio: 'inherit' });
+      console.log('✅ Firebase web app created successfully!');
+      return true;
+    } catch (createError) {
+      console.error('❌ Failed to create Firebase web app:', createError);
+      return false;
+    }
   }
 };
 
@@ -114,7 +153,6 @@ const deploy = async () => {
       }
     }
     
-    // Always prompt for project ID to make it easier to switch
     projectId = await promptForProjectId(projectId);
     
     console.log('Updating .firebaserc file with project ID...');
@@ -125,6 +163,16 @@ const deploy = async () => {
     };
     fs.writeFileSync('.firebaserc', JSON.stringify(firebaserc, null, 2));
     console.log('✅ .firebaserc updated successfully with project ID:', projectId);
+
+    const appInitialized = await initializeFirebaseApp(projectId);
+    if (!appInitialized) {
+      console.log('⚠️ Could not initialize Firebase web app. You may need to do this manually in the Firebase console.');
+      const continueDeploy = await askQuestion('Continue with deployment anyway? (y/n): ');
+      if (continueDeploy.toLowerCase() !== 'y') {
+        console.log('Deployment cancelled.');
+        process.exit(0);
+      }
+    }
 
     if (!fs.existsSync('node_modules')) {
       console.log('⚠️ node_modules not found. Installing dependencies...');
