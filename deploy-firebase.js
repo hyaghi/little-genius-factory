@@ -38,6 +38,22 @@ const promptForProjectId = async (currentId = '') => {
   return projectId.trim();
 };
 
+const forceRelogin = async () => {
+  console.log('Logging out from Firebase to reset credentials...');
+  try {
+    execSync('npx firebase-tools logout', { stdio: 'inherit' });
+    console.log('✅ Successfully logged out from Firebase.');
+    
+    console.log('Please log in with the Google account that has access to your project:');
+    execSync('npx firebase-tools login', { stdio: 'inherit' });
+    console.log('✅ Successfully logged in to Firebase.');
+    return true;
+  } catch (error) {
+    console.error('❌ Error during Firebase re-login:', error);
+    return false;
+  }
+};
+
 if (!fs.existsSync('firebase.json')) {
   console.log('Creating firebase.json configuration file...');
   const firebaseConfig = {
@@ -131,18 +147,61 @@ const deploy = async () => {
     }
 
     console.log('\n🚀 Deploying to Firebase...');
+    let deploymentSuccess = false;
     try {
       execSync(`npx firebase-tools deploy --project=${projectId}`, { stdio: 'inherit' });
+      deploymentSuccess = true;
+    } catch (error) {
+      const errorMsg = error.toString();
+      console.error('❌ Deployment failed:', error);
+      
+      if (errorMsg.includes('Failed to get Firebase project') || 
+          errorMsg.includes('permission') || 
+          errorMsg.includes('not authorized')) {
+        
+        console.log('\n⚠️ Permission error detected. This might be because:');
+        console.log('1. You\'re not logged in with the correct Google account that owns this project');
+        console.log('2. The project ID doesn\'t exist or is incorrect');
+        console.log('3. Your account doesn\'t have permission to access this project');
+        
+        const tryRelogin = await askQuestion('\nWould you like to try logging out and logging in again with a different account? (y/n): ');
+        
+        if (tryRelogin.toLowerCase() === 'y') {
+          const reloginSuccess = await forceRelogin();
+          
+          if (reloginSuccess) {
+            const retryDeploy = await askQuestion('Would you like to try deploying again? (y/n): ');
+            
+            if (retryDeploy.toLowerCase() === 'y') {
+              try {
+                console.log('Attempting to deploy again...');
+                execSync(`npx firebase-tools deploy --project=${projectId}`, { stdio: 'inherit' });
+                deploymentSuccess = true;
+              } catch (retryError) {
+                console.error('❌ Deployment failed again:', retryError);
+              }
+            }
+          }
+        }
+        
+        if (!deploymentSuccess) {
+          console.log('\nTroubleshooting steps:');
+          console.log('1. Verify the project ID is correct. Your current project ID is:', projectId);
+          console.log('2. Go to Firebase console and confirm the project exists: https://console.firebase.google.com/');
+          console.log('3. Make sure you\'re logged in with the correct Google account that has access to this project');
+          console.log('4. If needed, create a new project in the Firebase console and use that project ID instead');
+        }
+      } else {
+        console.log('\nGeneral troubleshooting tips:');
+        console.log('1. Verify your internet connection');
+        console.log('2. Try running "npx firebase-tools deploy --project=your-project-id" directly');
+        console.log('3. Check Firebase status page for any outages: https://status.firebase.google.com/');
+      }
+    }
+    
+    if (deploymentSuccess) {
       console.log('\n✅ Deployment completed successfully!');
       console.log(`🌎 Your website is now live at: https://${projectId}.web.app`);
-    } catch (error) {
-      console.error('❌ Deployment failed:', error);
-      console.log('\nTroubleshooting tips:');
-      console.log('1. Make sure you have proper permissions for this project');
-      console.log('2. Verify your internet connection');
-      console.log('3. Try running "npx firebase-tools deploy --project=your-project-id" directly to see detailed errors');
-      console.log('4. Visit the Firebase console to ensure your project is set up correctly: https://console.firebase.google.com/');
-      process.exit(1);
     }
   } finally {
     rl.close();
