@@ -16,16 +16,23 @@ const askQuestion = (query) => new Promise((resolve) => rl.question(query, resol
 console.log('\n===== Firebase Deployment Script =====\n');
 console.log('Starting Firebase deployment process...');
 
-const promptForProjectId = async () => {
-  console.log('\n⚠️ No valid Firebase project ID found or access denied to current project ID.');
-  console.log('You need to provide a valid Firebase project ID to continue.');
+const promptForProjectId = async (currentId = '') => {
+  console.log('\n⚠️ Choose a Firebase project ID to continue.');
+  if (currentId) {
+    console.log(`Current project ID is: ${currentId}`);
+    const useExisting = await askQuestion('Do you want to use this project ID? (y/n): ');
+    if (useExisting.toLowerCase() === 'y') {
+      return currentId.trim();
+    }
+  }
+  
   console.log('To create a new Firebase project, visit: https://console.firebase.google.com/');
   
   const projectId = await askQuestion('Please enter your Firebase project ID: ');
   
   if (!projectId || projectId.trim() === '') {
     console.log('❌ Project ID cannot be empty. Please try again.');
-    return promptForProjectId();
+    return promptForProjectId(currentId);
   }
   
   return projectId.trim();
@@ -91,35 +98,17 @@ const deploy = async () => {
       }
     }
     
-    // Verify project exists and user has access before proceeding
-    let isValidProject = false;
+    // Always prompt for project ID to make it easier to switch
+    projectId = await promptForProjectId(projectId);
     
-    if (projectId) {
-      try {
-        console.log(`Verifying access to project ${projectId}...`);
-        execSync(`npx firebase-tools projects:list`, { stdio: 'pipe' });
-        // Try to get project info specifically
-        execSync(`npx firebase-tools projects:describe ${projectId}`, { stdio: 'pipe' });
-        isValidProject = true;
-        console.log(`✅ Project ${projectId} verified.`);
-      } catch (error) {
-        console.log(`⚠️ Could not access project ${projectId}. You might need to use a different project ID.`);
-        isValidProject = false;
+    console.log('Updating .firebaserc file with project ID...');
+    const firebaserc = {
+      "projects": {
+        "default": projectId
       }
-    }
-    
-    if (!isValidProject) {
-      projectId = await promptForProjectId();
-      
-      console.log('Updating .firebaserc file with new project ID...');
-      const firebaserc = {
-        "projects": {
-          "default": projectId
-        }
-      };
-      fs.writeFileSync('.firebaserc', JSON.stringify(firebaserc, null, 2));
-      console.log('✅ .firebaserc updated successfully with project ID:', projectId);
-    }
+    };
+    fs.writeFileSync('.firebaserc', JSON.stringify(firebaserc, null, 2));
+    console.log('✅ .firebaserc updated successfully with project ID:', projectId);
 
     if (!fs.existsSync('node_modules')) {
       console.log('⚠️ node_modules not found. Installing dependencies...');
