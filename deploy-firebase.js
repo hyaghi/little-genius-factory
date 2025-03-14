@@ -1,3 +1,4 @@
+
 #!/usr/bin/env node
 
 import { execSync } from 'child_process';
@@ -66,13 +67,41 @@ const deploy = async () => {
       }
     }
     
+    console.log('\n🔑 Checking Firebase login status...');
+    try {
+      const loginOutput = execSync('npx firebase-tools login:list', { encoding: 'utf8' });
+      if (loginOutput.includes('No authorized accounts')) {
+        console.log('You need to log in to Firebase. Starting login process...');
+        try {
+          execSync('npx firebase-tools login', { stdio: 'inherit' });
+        } catch (loginError) {
+          console.error('❌ Firebase login failed:', loginError);
+          process.exit(1);
+        }
+      } else {
+        console.log('✅ Already logged in to Firebase.');
+      }
+    } catch (error) {
+      console.log('⚠️ Could not check login status. Attempting to log in...');
+      try {
+        execSync('npx firebase-tools login', { stdio: 'inherit' });
+      } catch (loginError) {
+        console.error('❌ Firebase login failed:', loginError);
+        process.exit(1);
+      }
+    }
+    
+    // Verify project exists and user has access before proceeding
     let isValidProject = false;
     
     if (projectId) {
       try {
-        console.log(`Testing access to project ${projectId}...`);
-        execSync(`npx firebase-tools projects:list | grep ${projectId}`, { stdio: 'pipe' });
+        console.log(`Verifying access to project ${projectId}...`);
+        execSync(`npx firebase-tools projects:list`, { stdio: 'pipe' });
+        // Try to get project info specifically
+        execSync(`npx firebase-tools projects:describe ${projectId}`, { stdio: 'pipe' });
         isValidProject = true;
+        console.log(`✅ Project ${projectId} verified.`);
       } catch (error) {
         console.log(`⚠️ Could not access project ${projectId}. You might need to use a different project ID.`);
         isValidProject = false;
@@ -112,33 +141,9 @@ const deploy = async () => {
       process.exit(1);
     }
 
-    console.log('\n🔑 Checking Firebase login status...');
-    try {
-      const loginOutput = execSync('npx firebase-tools login:list', { encoding: 'utf8' });
-      if (loginOutput.includes('No authorized accounts')) {
-        console.log('You need to log in to Firebase. Starting login process...');
-        try {
-          execSync('npx firebase-tools login', { stdio: 'inherit' });
-        } catch (loginError) {
-          console.error('❌ Firebase login failed:', loginError);
-          process.exit(1);
-        }
-      } else {
-        console.log('✅ Already logged in to Firebase.');
-      }
-    } catch (error) {
-      console.log('⚠️ Could not check login status. Attempting to log in...');
-      try {
-        execSync('npx firebase-tools login', { stdio: 'inherit' });
-      } catch (loginError) {
-        console.error('❌ Firebase login failed:', loginError);
-        process.exit(1);
-      }
-    }
-
     console.log('\n🚀 Deploying to Firebase...');
     try {
-      execSync('npx firebase-tools deploy', { stdio: 'inherit' });
+      execSync(`npx firebase-tools deploy --project=${projectId}`, { stdio: 'inherit' });
       console.log('\n✅ Deployment completed successfully!');
       console.log(`🌎 Your website is now live at: https://${projectId}.web.app`);
     } catch (error) {
@@ -146,7 +151,8 @@ const deploy = async () => {
       console.log('\nTroubleshooting tips:');
       console.log('1. Make sure you have proper permissions for this project');
       console.log('2. Verify your internet connection');
-      console.log('3. Try running "npx firebase-tools deploy" directly to see detailed errors');
+      console.log('3. Try running "npx firebase-tools deploy --project=your-project-id" directly to see detailed errors');
+      console.log('4. Visit the Firebase console to ensure your project is set up correctly: https://console.firebase.google.com/');
       process.exit(1);
     }
   } finally {
